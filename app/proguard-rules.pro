@@ -1,0 +1,1 @@
+# Avide Travel Android - project specific R8/ProGuard rules.
