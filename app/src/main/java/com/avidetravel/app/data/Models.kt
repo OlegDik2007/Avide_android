@@ -38,9 +38,11 @@ data class Service(
 
         if (value == null) return priceNote?.takeIf { it.isNotBlank() } ?: "Ask agent for price"
 
+        val currencyCode = currency.ifBlank { "USD" }
+
         return runCatching {
             NumberFormat.getCurrencyInstance(Locale.US).apply {
-                currency = Currency.getInstance(currency.ifBlank { "USD" })
+                currency = Currency.getInstance(currencyCode)
                 maximumFractionDigits = if (value % 1.0 == 0.0) 0 else 2
             }.format(value)
         }.getOrElse {
