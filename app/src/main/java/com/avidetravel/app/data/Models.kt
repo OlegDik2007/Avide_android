@@ -17,6 +17,7 @@ data class Service(
     val location: String = "",
     val duration: String = "",
     val imageUrl: String? = null,
+    val imageUrls: List<String> = emptyList(),
     val agentId: Long? = null,
     val slug: String? = null,
     val startDate: String? = null,
@@ -32,14 +33,11 @@ data class Service(
 ) {
     fun displayPrice(): String {
         val raw = effectivePrice ?: myPrice
-        val value = raw
-            ?.replace(Regex("[^0-9.]"), "")
-            ?.toDoubleOrNull()
+        val value = raw?.replace(Regex("[^0-9.]"), "")?.toDoubleOrNull()
 
         if (value == null) return priceNote?.takeIf { it.isNotBlank() } ?: "Ask agent for price"
 
         val currencyCode = currency.ifBlank { "USD" }
-
         return runCatching {
             NumberFormat.getCurrencyInstance(Locale.US).apply {
                 currency = Currency.getInstance(currencyCode)
@@ -48,14 +46,6 @@ data class Service(
         }.getOrElse {
             "$" + if (value % 1.0 == 0.0) value.toLong().toString() else "%.2f".format(Locale.US, value)
         }
-    }
-
-    fun webUrl(): String {
-        val safeSlug = slug?.takeIf { it.isNotBlank() } ?: title
-            .lowercase(Locale.US)
-            .replace(Regex("[^a-z0-9]+"), "-")
-            .trim('-')
-        return "https://avide.travel/services/$id-$safeSlug"
     }
 }
 
@@ -67,4 +57,75 @@ data class Agent(
     val phone: String = "",
     val website: String = "",
     val location: String = ""
+)
+
+data class TravelTip(
+    val id: Long,
+    val topicSlug: String,
+    val topicTitle: String,
+    val title: String,
+    val slug: String,
+    val excerpt: String = "",
+    val content: String = "",
+    val coverImage: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
+)
+
+data class VideoReview(
+    val id: Long,
+    val hotelName: String,
+    val hotelSlug: String,
+    val location: String = "",
+    val title: String,
+    val channelName: String = "",
+    val youtubeVideoId: String,
+    val youtubeUrl: String,
+    val thumbnailUrl: String,
+    val isAvideOriginal: Boolean = false
+)
+
+data class ServiceVideoReview(
+    val hotelName: String,
+    val hotelSlug: String,
+    val location: String = "",
+    val review: VideoReview
+)
+
+data class ChatMessage(
+    val id: String,
+    val text: String,
+    val sender: String,
+    val timestamp: Long,
+    val senderName: String? = null
+)
+
+data class ChatSendResult(
+    val conversationId: String,
+    val message: ChatMessage?
+)
+
+data class UserProfile(
+    val id: String,
+    val email: String,
+    val role: String = "customer",
+    val firstName: String = "",
+    val lastName: String = "",
+    val name: String = "",
+    val phone: String = ""
+)
+
+data class LoginResult(
+    val token: String,
+    val user: UserProfile
+)
+
+data class InboxItem(
+    val id: String,
+    val title: String,
+    val body: String,
+    val type: String,
+    val refId: String? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val read: Boolean = false
 )
