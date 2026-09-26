@@ -97,6 +97,7 @@ private val exploreItems = listOf(
 fun AvideApp(viewModel: AvideViewModel = viewModel()) {
     val state = viewModel.state
     var tab by remember { mutableStateOf(MainTab.HOME) }
+    var dealDestination by remember { mutableStateOf("All") }
     var selectedService by remember { mutableStateOf<Service?>(null) }
 
     Scaffold(
@@ -106,7 +107,10 @@ fun AvideApp(viewModel: AvideViewModel = viewModel()) {
                 MainTab.entries.forEach { item ->
                     NavigationBarItem(
                         selected = tab == item,
-                        onClick = { tab = item },
+                        onClick = {
+                            if (item == MainTab.DEALS) dealDestination = "All"
+                            tab = item
+                        },
                         icon = { Text(item.icon, fontSize = 20.sp) },
                         label = { Text(item.label) }
                     )
@@ -120,12 +124,20 @@ fun AvideApp(viewModel: AvideViewModel = viewModel()) {
                 modifier = Modifier.padding(padding),
                 onRefresh = { viewModel.refresh() },
                 onOpenDeal = { selectedService = it },
-                onDeals = { tab = MainTab.DEALS },
+                onDeals = {
+                    dealDestination = "All"
+                    tab = MainTab.DEALS
+                },
+                onDestination = { destination ->
+                    dealDestination = destination
+                    tab = MainTab.DEALS
+                },
                 onExplore = { tab = MainTab.EXPLORE }
             )
             MainTab.DEALS -> DealsScreen(
                 state = state,
                 modifier = Modifier.padding(padding),
+                initialDestination = dealDestination,
                 onRefresh = { viewModel.refresh() },
                 onOpenDeal = { selectedService = it }
             )
@@ -182,6 +194,7 @@ private fun HomeScreen(
     onRefresh: () -> Unit,
     onOpenDeal: (Service) -> Unit,
     onDeals: () -> Unit,
+    onDestination: (String) -> Unit,
     onExplore: () -> Unit
 ) {
     val context = LocalContext.current
@@ -227,7 +240,7 @@ private fun HomeScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Flights, resorts, cruises and vacation packages in one place.",
+                        "Hand-picked vacation packages, resorts and cruises from real travel agents.",
                         color = Color.White.copy(alpha = .92f),
                         fontSize = 15.sp
                     )
@@ -242,8 +255,8 @@ private fun HomeScreen(
 
         item {
             SectionHeader(
-                title = "Plan your trip",
-                subtitle = "Everything you need in one app",
+                title = "Explore destinations",
+                subtitle = "Find live AvideTravel deals by destination",
                 modifier = Modifier.padding(18.dp, 22.dp, 18.dp, 10.dp)
             )
         }
@@ -254,12 +267,14 @@ private fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuickAction("🏨", "Hotels", Modifier.weight(1f)) { openUrl(context, "https://avide.travel/hotels") }
-                    QuickAction("✈️", "Flights", Modifier.weight(1f)) { openUrl(context, "https://avide.travel/flights") }
+                    QuickAction("🇩🇴", "Dominican", Modifier.weight(1f)) { onDestination("Dominican Republic") }
+                    QuickAction("🇲🇽", "Mexico", Modifier.weight(1f)) { onDestination("Mexico") }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuickAction("🛳️", "Cruises", Modifier.weight(1f)) { openUrl(context, "https://avide.travel/cruises") }
-                    QuickAction("🚗", "Cars", Modifier.weight(1f)) { openUrl(context, "https://avide.travel/carrentals") }
+                    QuickAction("🇯🇲", "Jamaica", Modifier.weight(1f)) { onDestination("Jamaica") }
+                    QuickAction("💡", "Travel Tips", Modifier.weight(1f)) {
+                        openUrl(context, "https://avide.travel/blog/travel-tips")
+                    }
                 }
             }
         }
@@ -351,10 +366,11 @@ private fun HomeScreen(
 private fun DealsScreen(
     state: AvideUiState,
     modifier: Modifier,
+    initialDestination: String,
     onRefresh: () -> Unit,
     onOpenDeal: (Service) -> Unit
 ) {
-    var selectedDestination by remember { mutableStateOf("All") }
+    var selectedDestination by remember(initialDestination) { mutableStateOf(initialDestination) }
 
     val filtered = remember(state.services, selectedDestination) {
         if (selectedDestination == "All") state.services
