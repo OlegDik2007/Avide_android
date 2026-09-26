@@ -106,7 +106,11 @@ private val destinations = listOf(
 )
 
 @Composable
-fun AvideApp(viewModel: AvideViewModel = viewModel()) {
+fun AvideApp(
+    googleAuthCode: String? = null,
+    onGoogleAuthConsumed: () -> Unit = {},
+    viewModel: AvideViewModel = viewModel()
+) {
     val context = LocalContext.current
     val state = viewModel.state
 
@@ -118,6 +122,18 @@ fun AvideApp(viewModel: AvideViewModel = viewModel()) {
     var currentUser by remember { mutableStateOf(SessionStore.currentUser(context)) }
     var favorites by remember { mutableStateOf(SessionStore.favoriteIds(context)) }
     var unreadCount by remember { mutableStateOf(SessionStore.unreadInboxCount(context)) }
+
+    LaunchedEffect(googleAuthCode) {
+        val code = googleAuthCode?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
+        runCatching { AvideApi.exchangeGoogleCode(code) }
+            .onSuccess { login ->
+                SessionStore.saveAuth(context, login)
+                currentUser = login.user
+                contentPage = null
+                tab = MainTab.PROFILE
+            }
+        onGoogleAuthConsumed()
+    }
 
     fun openChat(service: Service? = null) {
         chatService = service
@@ -1128,6 +1144,37 @@ private fun ProfileScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item { SectionHeader("Profile", "Account is optional — browsing and chat also work as a guest") }
+
+        item {
+            Button(
+                onClick = {
+                    context.startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://avide.travel/mobile/google-auth")
+                        )
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Continue with Google")
+            }
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalDivider(Modifier.weight(1f))
+                Text(
+                    "  or use email  ",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = .55f)
+                )
+                HorizontalDivider(Modifier.weight(1f))
+            }
+        }
 
         if (createMode) {
             item {
