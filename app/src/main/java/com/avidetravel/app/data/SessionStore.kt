@@ -78,7 +78,12 @@ object SessionStore {
         normal(context).getString("conversation_id", null)
 
     fun saveConversationId(context: Context, id: String) {
-        normal(context).edit().putString("conversation_id", id).apply()
+        val prefs = normal(context)
+        val editor = prefs.edit().putString("conversation_id", id)
+        if (!prefs.contains("last_chat_message_id")) {
+            editor.putString("last_chat_message_id", "_none")
+        }
+        editor.apply()
     }
 
     fun clearConversation(context: Context) {
