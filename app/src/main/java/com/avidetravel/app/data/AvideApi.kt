@@ -166,6 +166,27 @@ object AvideApi {
         ChatSendResult(id, msg)
     }
 
+    suspend fun exchangeGoogleCode(code: String): LoginResult = withContext(Dispatchers.IO) {
+        val payload = JSONObject().put("code", code)
+        val root = requestJson("$BASE/api/mobile/auth/google/exchange", "POST", payload)
+        if (!root.optBoolean("ok")) {
+            throw IllegalStateException(root.optString("error", "Google sign in failed"))
+        }
+        val user = root.optJSONObject("user") ?: throw IllegalStateException("Missing user profile")
+        LoginResult(
+            token = root.optString("token"),
+            user = UserProfile(
+                id = user.optString("id"),
+                email = user.optString("email"),
+                role = user.optString("role", "customer"),
+                firstName = user.optString("firstName"),
+                lastName = user.optString("lastName"),
+                name = user.optString("name"),
+                phone = user.optString("phone")
+            )
+        )
+    }
+
     suspend fun login(email: String, password: String): LoginResult = withContext(Dispatchers.IO) {
         val payload = JSONObject().put("email", email).put("password", password)
         val root = requestJson("$BASE/api/mobile/auth/login", "POST", payload)
