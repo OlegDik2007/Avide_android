@@ -75,6 +75,31 @@ class AvideUpdateWorker(
             val newestService = services.maxByOrNull { it.id }
             val newestTip = tips.maxByOrNull { it.id }
 
+            val conversationId = SessionStore.conversationId(applicationContext)
+            if (!conversationId.isNullOrBlank()) {
+                val messages = runCatching { AvideApi.getChatMessages(conversationId) }.getOrDefault(emptyList())
+                val newestAgentMessage = messages.lastOrNull { it.sender == "admin" }
+                if (newestAgentMessage != null) {
+                    val previousChatId = SessionStore.lastChatMessageId(applicationContext)
+                    if (previousChatId != null && newestAgentMessage.id != previousChatId) {
+                        val title = "New message from AvideTravel"
+                        val body = newestAgentMessage.text
+                        pushNotification(300001, title, body)
+                        SessionStore.addInboxItem(
+                            applicationContext,
+                            InboxItem(
+                                id = "chat-${newestAgentMessage.id}",
+                                title = title,
+                                body = body,
+                                type = "chat",
+                                refId = conversationId
+                            )
+                        )
+                    }
+                    SessionStore.setLastChatMessageId(applicationContext, newestAgentMessage.id)
+                }
+            }
+
             val previousServiceId = SessionStore.lastServiceId(applicationContext)
             val previousTipId = SessionStore.lastTipId(applicationContext)
 
