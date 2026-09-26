@@ -82,7 +82,14 @@ object SessionStore {
     }
 
     fun clearConversation(context: Context) {
-        normal(context).edit().remove("conversation_id").apply()
+        normal(context).edit().remove("conversation_id").remove("last_chat_message_id").apply()
+    }
+
+    fun lastChatMessageId(context: Context): String? =
+        normal(context).getString("last_chat_message_id", null)
+
+    fun setLastChatMessageId(context: Context, id: String) {
+        normal(context).edit().putString("last_chat_message_id", id).apply()
     }
 
     fun favoriteIds(context: Context): Set<Long> =
