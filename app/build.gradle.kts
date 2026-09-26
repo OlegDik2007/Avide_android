@@ -59,4 +59,6 @@ dependencies {
 
     implementation("io.coil-kt.coil3:coil-compose:3.6.3")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.3")
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }
