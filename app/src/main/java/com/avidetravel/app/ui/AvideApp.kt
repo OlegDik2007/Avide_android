@@ -880,7 +880,11 @@ private fun ChatScreen(
             val id = conversationId
             if (!id.isNullOrBlank()) {
                 runCatching { AvideApi.getChatMessages(id) }
-                    .onSuccess { messages = it }
+                    .onSuccess {
+                        messages = it
+                        it.lastOrNull { message -> message.sender == "admin" }
+                            ?.let { message -> SessionStore.setLastChatMessageId(context, message.id) }
+                    }
             }
             delay(5000)
         }
