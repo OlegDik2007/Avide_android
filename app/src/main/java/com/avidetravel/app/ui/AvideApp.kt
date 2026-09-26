@@ -129,6 +129,13 @@ fun AvideApp(viewModel: AvideViewModel = viewModel()) {
         favorites = SessionStore.toggleFavorite(context, id)
     }
 
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            unreadCount = SessionStore.unreadInboxCount(context)
+            delay(5000)
+        }
+    }
+
     Scaffold(
         topBar = {
             AvideHeader(
@@ -186,7 +193,11 @@ fun AvideApp(viewModel: AvideViewModel = viewModel()) {
                 onOpenDeal = { id ->
                     state.services.firstOrNull { it.id == id }?.let { selectedService = it }
                 },
-                onOpenTips = { contentPage = ContentPage.TIPS }
+                onOpenTips = { contentPage = ContentPage.TIPS },
+                onOpenChat = {
+                    contentPage = null
+                    tab = MainTab.CHAT
+                }
             )
             null -> when (tab) {
                 MainTab.HOME -> HomeScreen(
@@ -801,7 +812,8 @@ private fun NotificationInboxScreen(
     modifier: Modifier,
     onBack: () -> Unit,
     onOpenDeal: (Long) -> Unit,
-    onOpenTips: () -> Unit
+    onOpenTips: () -> Unit,
+    onOpenChat: () -> Unit
 ) {
     val context = LocalContext.current
     val inbox = remember { SessionStore.inboxItems(context) }
@@ -829,6 +841,7 @@ private fun NotificationInboxScreen(
                     .clickable {
                         if (item.type == "deal") item.refId?.toLongOrNull()?.let(onOpenDeal)
                         if (item.type == "tip") onOpenTips()
+                        if (item.type == "chat") onOpenChat()
                     }
             ) {
                 Column(Modifier.padding(16.dp)) {
